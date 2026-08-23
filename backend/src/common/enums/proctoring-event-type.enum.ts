@@ -1,0 +1,8 @@
+export enum ProctoringEventType {
+  TAB_SWITCH = 'TAB_SWITCH',
+  WINDOW_BLUR = 'WINDOW_BLUR',
+  FULLSCREEN_EXIT = 'FULLSCREEN_EXIT',
+  COPY = 'COPY',
+  PASTE = 'PASTE',
+  RIGHT_CLICK = 'RIGHT_CLICK',
+}

@@ -10,6 +10,7 @@ import { UserRole } from '../common/enums/user-role.enum';
 import { UsersService } from '../users/users.service';
 import { AssignAssessmentDto } from './dto/assign-assessment.dto';
 import { Assignment, AssignmentDocument } from './schemas/assignment.schema';
+import { AssignmentStatus } from '../common/enums/assignment-status.enum';
 
 @Injectable()
 export class AssignmentsService {
@@ -91,6 +92,10 @@ export class AssignmentsService {
     }
 
     return assignment;
+  }
+
+  async updateStatus(id: string, status: AssignmentStatus) {
+    await this.assignmentModel.findByIdAndUpdate(id, { status }).exec();
   }
 
   async findCandidateAssignmentOrThrow(id: string, candidateId: string) {
