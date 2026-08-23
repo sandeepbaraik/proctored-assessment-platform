@@ -33,6 +33,30 @@ export type Assignment = {
   assignedAt: string;
 };
 
+export type Candidate = {
+  _id: string;
+  name: string;
+  email: string;
+  role: 'CANDIDATE';
+};
+
+export type Submission = {
+  _id: string;
+  attemptId: string;
+  assessmentId: Assessment;
+  candidateId: Candidate;
+  score: number;
+  submittedAt: string;
+  status: 'SUBMITTED';
+};
+
+export type ProctoringEvent = {
+  _id: string;
+  eventType: string;
+  timestamp: string;
+  metadata?: Record<string, unknown>;
+};
+
 export type AttemptState = {
   attempt: {
     _id: string;

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { UserRole } from '../common/enums/user-role.enum';
 import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
@@ -19,5 +20,13 @@ export class UsersService {
     }
 
     return this.userModel.findById(id).exec();
+  }
+
+  findCandidates() {
+    return this.userModel
+      .find({ role: UserRole.CANDIDATE })
+      .select('name email role')
+      .sort({ email: 1 })
+      .exec();
   }
 }
