@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -39,28 +38,30 @@ export class AssignmentsService {
       throw new BadRequestException('All assignees must be valid candidates');
     }
 
-    try {
-      const assignments = await this.assignmentModel.insertMany(
-        uniqueCandidateIds.map((candidateId) => ({
-          assessmentId: new Types.ObjectId(assessmentId),
-          candidateId: new Types.ObjectId(candidateId),
-        })),
-        { ordered: false },
-      );
+    const assignments = await Promise.all(
+      uniqueCandidateIds.map((candidateId) =>
+        this.assignmentModel.findOneAndUpdate(
+          {
+            assessmentId: new Types.ObjectId(assessmentId),
+            candidateId: new Types.ObjectId(candidateId),
+          },
+          {
+            $setOnInsert: {
+              assessmentId: new Types.ObjectId(assessmentId),
+              candidateId: new Types.ObjectId(candidateId),
+              assignedAt: new Date(),
+              status: AssignmentStatus.ASSIGNED,
+            },
+          },
+          { new: true, upsert: true },
+        ),
+      ),
+    );
 
-      return {
-        createdCount: assignments.length,
-        assignments,
-      };
-    } catch (error) {
-      if (this.isDuplicateKeyError(error)) {
-        throw new ConflictException(
-          'One or more candidates are already assigned to this assessment',
-        );
-      }
-
-      throw error;
-    }
+    return {
+      createdCount: assignments.length,
+      assignments,
+    };
   }
 
   findAllForAdmin() {
@@ -73,8 +74,12 @@ export class AssignmentsService {
   }
 
   findForCandidate(candidateId: string) {
+    if (!Types.ObjectId.isValid(candidateId)) {
+      return [];
+    }
+
     return this.assignmentModel
-      .find({ candidateId })
+      .find({ candidateId: new Types.ObjectId(candidateId) })
       .populate('assessmentId', 'title description durationMinutes status')
       .sort({ assignedAt: -1 })
       .exec();
@@ -98,13 +103,26 @@ export class AssignmentsService {
     await this.assignmentModel.findByIdAndUpdate(id, { status }).exec();
   }
 
+  async remove(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new NotFoundException('Assignment not found');
+    }
+
+    const assignment = await this.assignmentModel.findByIdAndDelete(id).exec();
+    if (!assignment) {
+      throw new NotFoundException('Assignment not found');
+    }
+
+    return { deleted: true };
+  }
+
   async findCandidateAssignmentOrThrow(id: string, candidateId: string) {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('Assignment not found');
     }
 
     const assignment = await this.assignmentModel
-      .findOne({ _id: id, candidateId })
+      .findOne({ _id: id, candidateId: new Types.ObjectId(candidateId) })
       .populate('assessmentId', 'title description durationMinutes status')
       .exec();
 
@@ -115,12 +133,4 @@ export class AssignmentsService {
     return assignment;
   }
 
-  private isDuplicateKeyError(error: unknown) {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      error.code === 11000
-    );
-  }
 }

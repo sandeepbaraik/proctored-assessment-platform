@@ -366,6 +366,10 @@ body {
   align-items: start;
 }
 
+.assessment-question-form {
+  width: min(100%, 620px);
+}
+
 .compact-alert {
   padding: 0.45rem 0.75rem;
   margin-bottom: 0;

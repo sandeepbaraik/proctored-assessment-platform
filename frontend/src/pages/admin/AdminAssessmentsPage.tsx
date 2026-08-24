@@ -47,6 +47,16 @@ export function AdminAssessmentsPage() {
     await load(targetPage, cursor);
   }
 
+  async function deleteAssessment(id: string) {
+    if (!window.confirm('Delete this assessment? This cannot be undone.')) return;
+    try {
+      await api.delete(`/assessments/${id}`);
+      await load(page, pageCursors[page] ?? null);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   return (
     <div className="stack">
       {error && <div className="alert alert-danger">{error}</div>}
@@ -58,15 +68,21 @@ export function AdminAssessmentsPage() {
           </div>
           <div className="table-responsive">
             <table className="table align-middle">
-              <thead><tr><th>Title</th><th>Description</th><th>Duration</th><th>Status</th><th></th></tr></thead>
+              <thead><tr><th>S.No</th><th>Title</th><th>Description</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
-                {assessments.map((assessment) => (
+                {assessments.map((assessment, index) => (
                   <tr key={assessment._id}>
+                    <td>{page * 5 + index + 1}</td>
                     <td className="fw-semibold">{assessment.title}</td>
                     <td>{assessment.description}</td>
                     <td>{assessment.durationMinutes} min</td>
                     <td><span className="badge text-bg-light">{assessment.status}</span></td>
-                    <td><Link className="btn btn-outline-secondary btn-sm" to={`/admin/assessments/${assessment._id}`}>View</Link></td>
+                    <td>
+                      <div className="d-flex gap-1">
+                        <Link className="btn btn-outline-secondary btn-sm" to={`/admin/assessments/${assessment._id}`}>View/Edit</Link>
+                        <button className="btn btn-outline-danger btn-sm" onClick={() => deleteAssessment(assessment._id)}>Delete</button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -74,11 +90,6 @@ export function AdminAssessmentsPage() {
           </div>
           <div className="pagination-bar">
             <button className="page-btn" disabled={page === 0} onClick={goPrevious}>Previous</button>
-            {[0, 1, 2].map((pageIndex) => (
-              <button className={`page-btn number ${page === pageIndex ? 'active' : ''}`} disabled={pageCursors[pageIndex] === undefined && !(pageIndex === page + 1 && nextCursor)} key={pageIndex} onClick={() => goPage(pageIndex)}>
-                {pageIndex + 1}
-              </button>
-            ))}
             <button className="page-btn" disabled={!nextCursor} onClick={goNext}>Next</button>
           </div>
         </div>

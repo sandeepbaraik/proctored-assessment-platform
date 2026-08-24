@@ -94,6 +94,15 @@ export class AssessmentsController {
     return this.questionsService.findForAssessment(assessmentId, true);
   }
 
+  @Delete(':assessmentId/questions/:questionId')
+  async detachQuestion(
+    @Param('assessmentId') assessmentId: string,
+    @Param('questionId') questionId: string,
+  ) {
+    await this.assessmentsService.findByIdOrThrow(assessmentId);
+    return this.questionsService.detachFromAssessment(assessmentId, questionId);
+  }
+
   @Patch('questions/:id')
   updateQuestion(
     @Param('id') id: string,

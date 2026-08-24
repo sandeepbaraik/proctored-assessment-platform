@@ -33,6 +33,16 @@ export type Assignment = {
   assignedAt: string;
 };
 
+export type CandidateSubmissionScore = {
+  assignmentId: string;
+  assessmentId: string;
+  score: number;
+  totalMarks: number;
+  objectiveTotalMarks: number;
+  requiresManualReview: boolean;
+  percentage: number;
+};
+
 export type AdminAssignment = {
   _id: string;
   assessmentId: Assessment;

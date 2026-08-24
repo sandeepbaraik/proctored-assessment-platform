@@ -6,6 +6,7 @@ import { AssessmentDetailsPage } from './pages/admin/AssessmentDetailsPage';
 import { CreateAssessmentPage } from './pages/admin/CreateAssessmentPage';
 import { AdminQuestionsPage } from './pages/admin/AdminQuestionsPage';
 import { CreateQuestionPage } from './pages/admin/CreateQuestionPage';
+import { EditQuestionPage } from './pages/admin/EditQuestionPage';
 import { QuestionDetailsPage } from './pages/admin/QuestionDetailsPage';
 import { AdminSubmissionsPage } from './pages/admin/AdminSubmissionsPage';
 import { CandidateDashboard } from './pages/candidate/CandidateDashboard';
@@ -45,6 +46,10 @@ export function App() {
           <Route
             path="/admin/questions/new"
             element={<ProtectedRoute role="ADMIN"><CreateQuestionPage /></ProtectedRoute>}
+          />
+          <Route
+            path="/admin/questions/:id/edit"
+            element={<ProtectedRoute role="ADMIN"><EditQuestionPage /></ProtectedRoute>}
           />
           <Route
             path="/admin/questions/:id"

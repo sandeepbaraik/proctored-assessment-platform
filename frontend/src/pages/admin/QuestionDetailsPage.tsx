@@ -25,7 +25,6 @@ export function QuestionDetailsPage() {
           <dt className="col-sm-3">Question</dt><dd className="col-sm-9">{question.questionText}</dd>
           <dt className="col-sm-3">Type</dt><dd className="col-sm-9">{question.type}</dd>
           <dt className="col-sm-3">Marks</dt><dd className="col-sm-9">{question.marks}</dd>
-          <dt className="col-sm-3">Order</dt><dd className="col-sm-9">{question.order}</dd>
           <dt className="col-sm-3">Correct Answers</dt><dd className="col-sm-9">{question.correctAnswers?.join(', ') || '-'}</dd>
           <dt className="col-sm-3">Options</dt><dd className="col-sm-9">{question.options?.length ? <ul className="mb-0">{question.options.map((option) => <li key={option.label}>{option.label}. {option.text}</li>)}</ul> : '-'}</dd>
         </dl>

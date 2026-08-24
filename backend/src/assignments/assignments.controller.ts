@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AssessmentsService } from '../assessments/assessments.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -34,6 +34,12 @@ export class AssignmentsController {
   @Roles(UserRole.ADMIN)
   findAllForAdmin() {
     return this.assignmentsService.findAllForAdmin();
+  }
+
+  @Delete('assignments/:id')
+  @Roles(UserRole.ADMIN)
+  remove(@Param('id') id: string) {
+    return this.assignmentsService.remove(id);
   }
 
   @Get('candidate/assignments')

@@ -10,6 +10,7 @@ import { AssessmentsService } from '../assessments/assessments.service';
 import { AssignmentsService } from '../assignments/assignments.service';
 import { AssignmentStatus } from '../common/enums/assignment-status.enum';
 import { AttemptStatus } from '../common/enums/attempt-status.enum';
+import { QuestionType } from '../common/enums/question-type.enum';
 import { UserRole } from '../common/enums/user-role.enum';
 import { AuthenticatedUser } from '../common/types/authenticated-user.type';
 import { QuestionsService } from '../questions/questions.service';
@@ -55,8 +56,8 @@ export class AttemptsService {
 
     const existingAttempt = await this.attemptModel
       .findOne({
-        assignmentId,
-        candidateId,
+        assignmentId: new Types.ObjectId(assignmentId),
+        candidateId: new Types.ObjectId(candidateId),
         status: {
           $in: [
             AttemptStatus.IN_PROGRESS,
@@ -158,7 +159,7 @@ export class AttemptsService {
     );
 
     const existingSubmission = await this.submissionModel
-      .findOne({ attemptId })
+      .findOne({ attemptId: new Types.ObjectId(attemptId) })
       .exec();
 
     if (existingSubmission) {
@@ -199,7 +200,9 @@ export class AttemptsService {
       return submission;
     } catch (error) {
       if (this.isDuplicateKeyError(error)) {
-        return this.submissionModel.findOne({ attemptId }).exec();
+        return this.submissionModel
+          .findOne({ attemptId: new Types.ObjectId(attemptId) })
+          .exec();
       }
 
       throw error;
@@ -234,7 +237,7 @@ export class AttemptsService {
     this.assertAttemptAccess(attempt, user);
 
     return this.proctoringEventModel
-      .find({ attemptId })
+      .find({ attemptId: new Types.ObjectId(attemptId) })
       .sort({ timestamp: 1 })
       .exec();
   }
@@ -243,6 +246,7 @@ export class AttemptsService {
     const query = cursor && Types.ObjectId.isValid(cursor) ? { _id: { $lt: cursor } } : {};
     const items = await this.submissionModel
       .find(query)
+      .populate('attemptId', '_id')
       .populate('assessmentId', 'title durationMinutes')
       .populate('candidateId', 'name email')
       .sort({ _id: -1 })
@@ -253,6 +257,44 @@ export class AttemptsService {
     return { data, nextCursor: hasMore ? data[data.length - 1]._id.toString() : null };
   }
 
+  async findSubmissionScoresForCandidate(candidateId: string) {
+    const submissions = await this.submissionModel
+      .find({ candidateId: new Types.ObjectId(candidateId) })
+      .exec();
+
+    return Promise.all(
+      submissions.map(async (submission) => {
+        const questions = await this.questionsService.findForAssessment(
+          submission.assessmentId.toString(),
+          true,
+        );
+        const totalMarks = questions.reduce(
+          (total, question) => total + question.marks,
+          0,
+        );
+        const objectiveTotalMarks = questions
+          .filter((question) => question.type !== QuestionType.SHORT_ANSWER)
+          .reduce((total, question) => total + question.marks, 0);
+        const requiresManualReview = questions.some(
+          (question) => question.type === QuestionType.SHORT_ANSWER,
+        );
+
+        return {
+          assignmentId: submission.assignmentId.toString(),
+          assessmentId: submission.assessmentId.toString(),
+          score: submission.score,
+          totalMarks,
+          objectiveTotalMarks,
+          requiresManualReview,
+          percentage:
+            objectiveTotalMarks > 0
+              ? Math.round((submission.score / objectiveTotalMarks) * 100)
+              : 0,
+        };
+      }),
+    );
+  }
+
   async findSubmissionForAdmin(id: string) {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('Submission not found');
@@ -260,6 +302,7 @@ export class AttemptsService {
 
     const submission = await this.submissionModel
       .findById(id)
+      .populate('attemptId', '_id')
       .populate('assessmentId', 'title durationMinutes')
       .populate('candidateId', 'name email')
       .exec();
@@ -334,7 +377,10 @@ export class AttemptsService {
       throw new NotFoundException('Attempt not found');
     }
 
-    const attempt = await this.attemptModel.findOne({ _id: id, candidateId });
+    const attempt = await this.attemptModel.findOne({
+      _id: new Types.ObjectId(id),
+      candidateId: new Types.ObjectId(candidateId),
+    });
 
     if (!attempt) {
       throw new NotFoundException('Attempt not found');

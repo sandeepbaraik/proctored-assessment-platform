@@ -82,6 +82,12 @@ export class AttemptsController {
     return this.attemptsService.getProctoringEvents(attemptId, user);
   }
 
+  @Get('candidate/submission-scores')
+  @Roles(UserRole.CANDIDATE)
+  findCandidateSubmissionScores(@CurrentUser() user: AuthenticatedUser) {
+    return this.attemptsService.findSubmissionScoresForCandidate(user.id);
+  }
+
   @Get('submissions')
   @Roles(UserRole.ADMIN)
   findSubmissionsForAdmin(@Query() query: CursorQueryDto) {

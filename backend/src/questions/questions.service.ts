@@ -116,6 +116,28 @@ export class QuestionsService {
     return this.findForAssessment(assessmentId, true);
   }
 
+  async detachFromAssessment(assessmentId: string, questionId: string) {
+    if (!Types.ObjectId.isValid(questionId)) {
+      throw new NotFoundException('Question not found');
+    }
+
+    const question = await this.questionModel.findById(questionId).exec();
+    if (!question) {
+      throw new NotFoundException('Question not found');
+    }
+
+    const assessmentObjectId = new Types.ObjectId(assessmentId);
+    question.assessmentIds = question.assessmentIds.filter(
+      (item) => item.toString() !== assessmentId,
+    );
+    if (question.assessmentId?.toString() === assessmentId) {
+      question.assessmentId = undefined;
+    }
+    await question.save();
+
+    return this.findForAssessment(assessmentId, true);
+  }
+
   private validateQuestionPayload(
     questionDto: CreateQuestionDto | UpdateQuestionDto,
   ) {

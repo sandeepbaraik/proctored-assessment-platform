@@ -1,8 +1,9 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export function AppLayout() {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -11,6 +12,7 @@ export function AppLayout() {
   }
 
   const isAdmin = user?.role === 'ADMIN';
+  const pageTitle = getPageTitle(location.pathname, isAdmin);
 
   return (
     <div className={`app-shell ${isAdmin ? 'admin-theme' : 'candidate-theme'}`}>
@@ -30,7 +32,6 @@ export function AppLayout() {
           ) : (
             <>
               <NavLink end className="side-link" to="/candidate">Dashboard</NavLink>
-              <NavLink className="side-link" to="/candidate">My Assessments</NavLink>
             </>
           )}
         </nav>
@@ -39,7 +40,7 @@ export function AppLayout() {
       <div className="app-main">
         <header className="topbar">
           <div>
-            <div className="fw-semibold">Dashboard</div>
+            <div className="fw-semibold">{pageTitle}</div>
             <div className="small text-muted">Welcome back, {isAdmin ? 'Admin' : 'Candidate'}</div>
           </div>
           <div className="user-pill">
@@ -53,4 +54,18 @@ export function AppLayout() {
       </div>
     </div>
   );
+}
+
+function getPageTitle(pathname: string, isAdmin: boolean) {
+  if (!isAdmin) return 'Dashboard';
+  if (pathname === '/admin') return 'Dashboard';
+  if (pathname === '/admin/assessments') return 'Assessments';
+  if (pathname === '/admin/assessments/new') return 'Create Assessment';
+  if (pathname.startsWith('/admin/assessments/')) return 'Assessment Details';
+  if (pathname === '/admin/questions') return 'Questions';
+  if (pathname === '/admin/questions/new') return 'Create Question';
+  if (pathname.endsWith('/edit') && pathname.startsWith('/admin/questions/')) return 'Edit Question';
+  if (pathname.startsWith('/admin/questions/')) return 'Question Details';
+  if (pathname === '/admin/submissions') return 'Submissions';
+  return 'Dashboard';
 }

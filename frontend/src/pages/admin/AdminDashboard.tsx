@@ -43,11 +43,11 @@ export function AdminDashboard() {
           </div>
           <div className="table-responsive">
             <table className="table align-middle">
-              <thead><tr><th>Title</th><th>Duration</th><th>Status</th><th>Description</th></tr></thead>
-              <tbody>{assessments.map((a) => <tr key={a._id}><td className="fw-semibold">{a.title}</td><td>{a.durationMinutes} min</td><td><span className="badge text-bg-light">{a.status}</span></td><td>{a.description}</td></tr>)}</tbody>
+              <thead><tr><th>S.No</th><th>Title</th><th>Duration</th><th>Status</th><th>Description</th></tr></thead>
+              <tbody>{assessments.map((a, index) => <tr key={a._id}><td>{index + 1}</td><td className="fw-semibold">{a.title}</td><td>{a.durationMinutes} min</td><td><span className="badge text-bg-light">{a.status}</span></td><td>{a.description}</td></tr>)}</tbody>
             </table>
           </div>
-          <Link to="/admin/assessments" className="btn btn-primary">Create Assessment</Link>
+          <Link to="/admin/assessments/new" className="btn btn-primary">Create Assessment</Link>
         </div>
       </section>
     </div>
