@@ -46,11 +46,7 @@ export class AttemptsService {
         candidateId,
       );
 
-    if (
-      [AssignmentStatus.SUBMITTED, AssignmentStatus.EXPIRED].includes(
-        assignment.status,
-      )
-    ) {
+    if (assignment.status === AssignmentStatus.SUBMITTED) {
       throw new ConflictException('Assignment cannot be started');
     }
 
@@ -69,7 +65,7 @@ export class AttemptsService {
       .exec();
 
     if (existingAttempt) {
-      await this.expireAttemptIfNeeded(existingAttempt);
+      await this.submitAttemptIfExpired(existingAttempt);
       return this.buildAttemptState(existingAttempt);
     }
 
@@ -101,7 +97,7 @@ export class AttemptsService {
   async getAttempt(attemptId: string, user: AuthenticatedUser) {
     const attempt = await this.findAttemptOrThrow(attemptId);
     this.assertAttemptAccess(attempt, user);
-    await this.expireAttemptIfNeeded(attempt);
+    await this.submitAttemptIfExpired(attempt);
 
     return this.buildAttemptState(attempt);
   }
@@ -158,15 +154,18 @@ export class AttemptsService {
       candidateId,
     );
 
+    await this.assertAttemptCanChange(attempt);
+    return this.createSubmissionForAttempt(attempt);
+  }
+
+  private async createSubmissionForAttempt(attempt: AttemptDocument) {
     const existingSubmission = await this.submissionModel
-      .findOne({ attemptId: new Types.ObjectId(attemptId) })
+      .findOne({ attemptId: attempt._id })
       .exec();
 
     if (existingSubmission) {
       return existingSubmission;
     }
-
-    await this.assertAttemptCanChange(attempt);
 
     const questions = await this.questionsService.findForAssessment(
       attempt.assessmentId.toString(),
@@ -201,7 +200,7 @@ export class AttemptsService {
     } catch (error) {
       if (this.isDuplicateKeyError(error)) {
         return this.submissionModel
-          .findOne({ attemptId: new Types.ObjectId(attemptId) })
+          .findOne({ attemptId: attempt._id })
           .exec();
       }
 
@@ -330,7 +329,7 @@ export class AttemptsService {
   }
 
   private async assertAttemptCanChange(attempt: AttemptDocument) {
-    await this.expireAttemptIfNeeded(attempt);
+    await this.submitAttemptIfExpired(attempt);
 
     if (attempt.status === AttemptStatus.SUBMITTED) {
       throw new ConflictException('Attempt is already submitted');
@@ -341,17 +340,12 @@ export class AttemptsService {
     }
   }
 
-  private async expireAttemptIfNeeded(attempt: AttemptDocument) {
+  private async submitAttemptIfExpired(attempt: AttemptDocument) {
     if (
       attempt.status === AttemptStatus.IN_PROGRESS &&
       attempt.expiresAt.getTime() <= Date.now()
     ) {
-      attempt.status = AttemptStatus.EXPIRED;
-      await attempt.save();
-      await this.assignmentsService.updateStatus(
-        attempt.assignmentId.toString(),
-        AssignmentStatus.EXPIRED,
-      );
+      await this.createSubmissionForAttempt(attempt);
     }
   }
 

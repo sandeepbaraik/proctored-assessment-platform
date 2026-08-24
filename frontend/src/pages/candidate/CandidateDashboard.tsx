@@ -26,6 +26,7 @@ export function CandidateDashboard() {
   const didHydrateAnswers = useRef(false);
   const isFlushingEvents = useRef(false);
   const flushPromise = useRef<Promise<void> | null>(null);
+  const isSubmittingAttempt = useRef(false);
   const isAttemptActive = attemptState?.attempt.status === 'IN_PROGRESS';
   const activeAttemptStorageKey = `activeAttemptId:${user?.id ?? 'anonymous'}`;
   const proctoringQueueKey = attemptState ? `proctoringEvents:${attemptState.attempt._id}` : '';
@@ -41,8 +42,10 @@ export function CandidateDashboard() {
 
   async function loadAttempt(attemptId: string, autoResume = false) {
     const { data } = await api.get(`/attempts/${attemptId}`);
-    if (autoResume && data.attempt.status !== 'IN_PROGRESS') {
+    if (data.attempt.status === 'SUBMITTED') {
       localStorage.removeItem(activeAttemptStorageKey);
+      setCompletionMessage('Assessment submitted because the timer expired.');
+      await loadAssignments();
       return;
     }
     applyAttemptState(data);
@@ -133,7 +136,13 @@ export function CandidateDashboard() {
 
   useEffect(() => {
     if (!attemptState) return;
-    const tick = () => setRemainingSeconds(Math.max(0, Math.floor((new Date(attemptState.attempt.expiresAt).getTime() - Date.now()) / 1000)));
+    const tick = () => {
+      const secondsLeft = Math.max(0, Math.floor((new Date(attemptState.attempt.expiresAt).getTime() - Date.now()) / 1000));
+      setRemainingSeconds(secondsLeft);
+      if (secondsLeft === 0 && attemptState.attempt.status === 'IN_PROGRESS') {
+        submitAttempt(true).catch(() => undefined);
+      }
+    };
     tick();
     const intervalId = window.setInterval(tick, 1000);
     return () => window.clearInterval(intervalId);
@@ -224,14 +233,21 @@ export function CandidateDashboard() {
     try {
       await enterFullscreen();
       const { data } = await api.post(`/assignments/${assignmentId}/start`);
+      if (data.attempt.status === 'SUBMITTED') {
+        localStorage.removeItem(activeAttemptStorageKey);
+        setCompletionMessage('Assessment submitted because the timer expired.');
+        await loadAssignments();
+        return;
+      }
       applyAttemptState(data);
     } catch (err) {
       setError(getErrorMessage(err));
     }
   }
 
-  async function submitAttempt() {
-    if (!attemptState) return;
+  async function submitAttempt(autoSubmit = false) {
+    if (!attemptState || isSubmittingAttempt.current) return;
+    isSubmittingAttempt.current = true;
     setError('');
     try {
       const needsManualReview = attemptState.questions.some((question) => question.type === 'SHORT_ANSWER');
@@ -239,7 +255,9 @@ export function CandidateDashboard() {
       const { data } = await api.post(`/attempts/${attemptState.attempt._id}/submit`);
       setSubmissionScore(data.score);
       setCompletionMessage(
-        needsManualReview
+        autoSubmit
+          ? `Time expired. Assessment submitted automatically. Objective score: ${data.score}${needsManualReview ? '. Final score is pending short answer review.' : ''}`
+          : needsManualReview
           ? `Assessment submitted. Objective score: ${data.score}. Final score is pending short answer review.`
           : `Assessment submitted. Score: ${data.score}`,
       );
@@ -249,6 +267,8 @@ export function CandidateDashboard() {
       setAttemptState(null);
     } catch (err) {
       setError(getErrorMessage(err));
+    } finally {
+      isSubmittingAttempt.current = false;
     }
   }
 
@@ -275,7 +295,7 @@ export function CandidateDashboard() {
         <div><button className="btn btn-outline-secondary btn-sm" onClick={() => setAttemptState(null)}>Back</button></div>
         <div className="attempt-header">
           <div><h1 className="h3 mb-1">{attemptState.assessment.title}</h1><div className="text-muted small">Status: {attemptState.attempt.status}</div></div>
-          <div className="d-flex align-items-center gap-3"><div className="text-end"><div className="small text-muted">Time Remaining</div><div className="timer-text">{formattedTime}</div></div><button className="btn btn-success" disabled={!isAttemptActive} onClick={submitAttempt}>Submit Test</button></div>
+          <div className="d-flex align-items-center gap-3"><div className="text-end"><div className="small text-muted">Time Remaining</div><div className="timer-text">{formattedTime}</div></div><button className="btn btn-success" disabled={!isAttemptActive} onClick={() => submitAttempt()}>Submit Test</button></div>
         </div>
         {error && <div className="alert alert-danger">{error}</div>}
         {(proctoringWarning || !isFullscreen) && <div className="alert alert-warning compact-alert d-flex justify-content-between align-items-center gap-3">
