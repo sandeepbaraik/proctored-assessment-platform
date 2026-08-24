@@ -18,6 +18,11 @@ export class QuestionsController {
     return this.questionsService.findPage(query.cursor, query.limit, true);
   }
 
+  @Get('count')
+  count() {
+    return this.questionsService.count();
+  }
+
   @Post()
   create(@Body() createQuestionDto: CreateQuestionDto) {
     return this.questionsService.createBankQuestion(createQuestionDto);

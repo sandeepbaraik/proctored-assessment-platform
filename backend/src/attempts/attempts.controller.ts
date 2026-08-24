@@ -94,6 +94,12 @@ export class AttemptsController {
     return this.attemptsService.findSubmissionsForAdmin(query.cursor, query.limit);
   }
 
+  @Get('submissions/count')
+  @Roles(UserRole.ADMIN)
+  countSubmissionsForAdmin() {
+    return this.attemptsService.countSubmissionsForAdmin();
+  }
+
   @Get('submissions/:id')
   @Roles(UserRole.ADMIN)
   findSubmissionForAdmin(@Param('id') id: string) {

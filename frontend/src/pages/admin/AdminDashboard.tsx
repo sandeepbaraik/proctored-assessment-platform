@@ -1,27 +1,38 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, getErrorMessage } from '../../services/api';
-import { Assessment, Candidate, Page, Question, Submission } from '../../types';
+import { Assessment, Candidate, Page } from '../../types';
+
+type CountResponse = {
+  total: number;
+};
 
 export function AdminDashboard() {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [totals, setTotals] = useState({
+    assessments: 0,
+    questions: 0,
+    submissions: 0,
+  });
   const [error, setError] = useState('');
 
   useEffect(() => {
     Promise.all([
       api.get<Page<Assessment>>('/assessments?limit=4'),
       api.get<Candidate[]>('/users/candidates'),
-      api.get<Page<Question>>('/questions?limit=5'),
-      api.get<Page<Submission>>('/submissions?limit=5'),
+      api.get<CountResponse>('/assessments/count'),
+      api.get<CountResponse>('/questions/count'),
+      api.get<CountResponse>('/submissions/count'),
     ])
-      .then(([assessmentRes, candidateRes, questionRes, submissionRes]) => {
+      .then(([assessmentRes, candidateRes, assessmentCountRes, questionCountRes, submissionCountRes]) => {
         setAssessments(assessmentRes.data.data);
         setCandidates(candidateRes.data);
-        setQuestions(questionRes.data.data);
-        setSubmissions(submissionRes.data.data);
+        setTotals({
+          assessments: assessmentCountRes.data.total,
+          questions: questionCountRes.data.total,
+          submissions: submissionCountRes.data.total,
+        });
       })
       .catch((err) => setError(getErrorMessage(err)));
   }, []);
@@ -30,10 +41,10 @@ export function AdminDashboard() {
     <div>
       {error && <div className="alert alert-danger">{error}</div>}
       <div className="summary-grid compact-summary mb-2">
-        <div className="metric-card"><span>Assessments</span><strong>{assessments.length}</strong><small>Recent</small></div>
+        <div className="metric-card"><span>Assessments</span><strong>{totals.assessments}</strong><small>Total</small></div>
         <div className="metric-card"><span>Candidates</span><strong>{candidates.length}</strong><small>Total</small></div>
-        <div className="metric-card"><span>Questions</span><strong>{questions.length}</strong><small>Recent</small></div>
-        <div className="metric-card"><span>Submissions</span><strong>{submissions.length}</strong><small>Recent</small></div>
+        <div className="metric-card"><span>Questions</span><strong>{totals.questions}</strong><small>Total</small></div>
+        <div className="metric-card"><span>Submissions</span><strong>{totals.submissions}</strong><small>Total</small></div>
       </div>
       <section className="card compact-card">
         <div className="card-body">

@@ -256,6 +256,10 @@ export class AttemptsService {
     return { data, nextCursor: hasMore ? data[data.length - 1]._id.toString() : null };
   }
 
+  async countSubmissionsForAdmin() {
+    return { total: await this.submissionModel.countDocuments().exec() };
+  }
+
   async findSubmissionScoresForCandidate(candidateId: string) {
     const submissions = await this.submissionModel
       .find({ candidateId: new Types.ObjectId(candidateId) })

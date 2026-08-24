@@ -23,6 +23,10 @@ export class AssessmentsService {
     return this.assessmentModel.find().sort({ createdAt: -1 }).exec();
   }
 
+  async count() {
+    return { total: await this.assessmentModel.countDocuments().exec() };
+  }
+
   async findPage(cursor?: string, limit = 10) {
     const query = cursor && Types.ObjectId.isValid(cursor) ? { _id: { $lt: cursor } } : {};
     const items = await this.assessmentModel

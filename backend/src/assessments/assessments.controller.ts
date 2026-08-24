@@ -49,6 +49,11 @@ export class AssessmentsController {
     return this.assessmentsService.findAll();
   }
 
+  @Get('count')
+  count() {
+    return this.assessmentsService.count();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.assessmentsService.findByIdOrThrow(id);

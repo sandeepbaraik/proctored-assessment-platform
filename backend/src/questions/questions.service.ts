@@ -42,6 +42,10 @@ export class QuestionsService {
     return { data, nextCursor: hasMore ? data[data.length - 1]._id.toString() : null };
   }
 
+  async count() {
+    return { total: await this.questionModel.countDocuments().exec() };
+  }
+
   async findByIdOrThrow(id: string, includeCorrectAnswers = true) {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('Question not found');

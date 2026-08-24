@@ -17,6 +17,13 @@ export function CreateAssessmentPage() {
       .catch((err) => setError(getErrorMessage(err)));
   }, []);
 
+  const isFormValid =
+    form.title.trim().length > 0 &&
+    Number(form.durationMinutes) > 0 &&
+    form.status.trim().length > 0 &&
+    form.description.trim().length > 0 &&
+    questionIds.length > 0;
+
   async function createAssessment(event: FormEvent) {
     event.preventDefault();
     if (questionIds.length === 0) {
@@ -47,7 +54,7 @@ export function CreateAssessmentPage() {
             <div className="col-md-3"><label className="form-label">Status</label><select className="form-select" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })} required><option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option><option value="ARCHIVED">Archived</option></select></div>
             <div className="col-12"><label className="form-label">Description</label><textarea className="form-control" rows={3} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} required /></div>
             <div className="col-12"><label className="form-label">Questions</label><CheckboxMultiSelect options={questions.map((question) => ({ value: question._id, label: question.questionText }))} value={questionIds} onChange={setQuestionIds} placeholder="Select questions" /></div>
-            <div className="col-12"><button className="btn btn-primary">Create Assessment</button></div>
+            <div className="col-12"><button className="btn btn-primary" disabled={!isFormValid}>Create Assessment</button></div>
           </form>
         </div>
       </section>

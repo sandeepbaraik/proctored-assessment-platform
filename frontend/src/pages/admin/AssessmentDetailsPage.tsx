@@ -94,6 +94,11 @@ export function AssessmentDetailsPage() {
     assignmentPage * assignmentPageSize,
     assignmentPage * assignmentPageSize + assignmentPageSize,
   );
+  const isAssessmentFormValid =
+    assessmentForm.title.trim().length > 0 &&
+    Number(assessmentForm.durationMinutes) > 0 &&
+    assessmentForm.status.trim().length > 0 &&
+    assessmentForm.description.trim().length > 0;
 
   async function assignCandidates(event: FormEvent) {
     event.preventDefault();
@@ -130,10 +135,11 @@ export function AssessmentDetailsPage() {
     }
   }
 
-  async function removeQuestion(questionId: string) {
+  async function removeQuestion(question: Question) {
     if (!id) return;
+    if (!window.confirm(`Remove this question from the assessment?\n\n${question.questionText}`)) return;
     try {
-      const { data } = await api.delete<Question[]>(`/assessments/${id}/questions/${questionId}`);
+      const { data } = await api.delete<Question[]>(`/assessments/${id}/questions/${question._id}`);
       setQuestions(data);
       setQuestionPage(0);
       setMessage('Question removed from assessment');
@@ -181,7 +187,7 @@ export function AssessmentDetailsPage() {
                   <div className="col-md-3"><label className="form-label">Duration</label><input className="form-control form-control-sm" type="number" min="1" value={assessmentForm.durationMinutes} onChange={(event) => setAssessmentForm({ ...assessmentForm, durationMinutes: Number(event.target.value) })} required /></div>
                   <div className="col-md-4"><label className="form-label">Status</label><select className="form-select form-select-sm" value={assessmentForm.status} onChange={(event) => setAssessmentForm({ ...assessmentForm, status: event.target.value })} required><option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option><option value="ARCHIVED">Archived</option></select></div>
                   <div className="col-12"><label className="form-label">Description</label><textarea className="form-control form-control-sm" rows={2} value={assessmentForm.description} onChange={(event) => setAssessmentForm({ ...assessmentForm, description: event.target.value })} required /></div>
-                  <div className="col-12 d-flex gap-2"><button className="btn btn-primary btn-sm">Save</button><button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => setEditingAssessment(false)}>Cancel</button></div>
+                  <div className="col-12 d-flex gap-2"><button className="btn btn-primary btn-sm" disabled={!isAssessmentFormValid}>Save</button><button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => setEditingAssessment(false)}>Cancel</button></div>
                 </form>
               ) : (
                 <>
@@ -229,7 +235,7 @@ export function AssessmentDetailsPage() {
                     <td>{question.questionText}</td>
                     <td>{question.type}</td>
                     <td>{question.marks}</td>
-                    <td><button className="btn btn-outline-danger btn-sm" onClick={() => removeQuestion(question._id)}>Remove</button></td>
+                    <td><button className="btn btn-outline-danger btn-sm" onClick={() => removeQuestion(question)}>Remove</button></td>
                   </tr>
                 ))}
               </tbody>
