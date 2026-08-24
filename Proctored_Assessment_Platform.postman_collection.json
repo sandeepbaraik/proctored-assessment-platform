@@ -1,0 +1,339 @@
+{
+  "info": {
+    "name": "Proctored Assessment Platform",
+    "description": "Postman collection for the local Proctored Assessment Platform API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api" },
+    { "key": "adminToken", "value": "" },
+    { "key": "candidateToken", "value": "" },
+    { "key": "assessmentId", "value": "" },
+    { "key": "questionId", "value": "" },
+    { "key": "candidateId", "value": "" },
+    { "key": "assignmentId", "value": "" },
+    { "key": "attemptId", "value": "" },
+    { "key": "submissionId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) pm.collectionVariables.set('adminToken', json.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin@123\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Candidate Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) pm.collectionVariables.set('candidateToken', json.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"candidate1@example.com\",\n  \"password\": \"Candidate@123\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Assessments",
+      "item": [
+        {
+          "name": "List Assessments",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/assessments?limit=5"
+          }
+        },
+        {
+          "name": "Create Assessment",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Sample Assessment\",\n  \"description\": \"Sample local API assessment\",\n  \"durationMinutes\": 60,\n  \"status\": \"PUBLISHED\",\n  \"proctoringRules\": {\n    \"captureTabSwitch\": true,\n    \"captureWindowBlur\": true,\n    \"captureFullscreenExit\": true,\n    \"captureCopyPaste\": true,\n    \"captureRightClick\": true,\n    \"violationLimit\": 5\n  }\n}"
+            },
+            "url": "{{baseUrl}}/assessments"
+          }
+        },
+        {
+          "name": "Get Assessment",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/assessments/{{assessmentId}}"
+          }
+        },
+        {
+          "name": "Update Assessment",
+          "request": {
+            "method": "PATCH",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated Assessment\",\n  \"description\": \"Updated description\",\n  \"durationMinutes\": 75,\n  \"status\": \"PUBLISHED\"\n}" },
+            "url": "{{baseUrl}}/assessments/{{assessmentId}}"
+          }
+        },
+        {
+          "name": "Delete Assessment",
+          "request": {
+            "method": "DELETE",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/assessments/{{assessmentId}}"
+          }
+        },
+        {
+          "name": "Assessment Questions",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/assessments/{{assessmentId}}/questions"
+          }
+        },
+        {
+          "name": "Attach Questions",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"questionIds\": [\"{{questionId}}\"]\n}" },
+            "url": "{{baseUrl}}/assessments/{{assessmentId}}/questions/attach"
+          }
+        },
+        {
+          "name": "Detach Question",
+          "request": {
+            "method": "DELETE",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/assessments/{{assessmentId}}/questions/{{questionId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Questions",
+      "item": [
+        {
+          "name": "List Questions",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/questions?limit=5"
+          }
+        },
+        {
+          "name": "Create Question",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"SINGLE_CHOICE\",\n  \"questionText\": \"Which HTTP method is commonly used to update a resource?\",\n  \"options\": [\n    { \"label\": \"A\", \"text\": \"GET\" },\n    { \"label\": \"B\", \"text\": \"PATCH\" },\n    { \"label\": \"C\", \"text\": \"TRACE\" }\n  ],\n  \"correctAnswers\": [\"B\"],\n  \"marks\": 2,\n  \"order\": 0\n}"
+            },
+            "url": "{{baseUrl}}/questions"
+          }
+        },
+        {
+          "name": "Get Question",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/questions/{{questionId}}"
+          }
+        },
+        {
+          "name": "Update Question",
+          "request": {
+            "method": "PATCH",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"SINGLE_CHOICE\",\n  \"questionText\": \"Updated question text\",\n  \"options\": [\n    { \"label\": \"A\", \"text\": \"Option A\" },\n    { \"label\": \"B\", \"text\": \"Option B\" }\n  ],\n  \"correctAnswers\": [\"A\"],\n  \"marks\": 2,\n  \"order\": 0\n}"
+            },
+            "url": "{{baseUrl}}/assessments/questions/{{questionId}}"
+          }
+        },
+        {
+          "name": "Delete Question",
+          "request": {
+            "method": "DELETE",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/assessments/questions/{{questionId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Assignments and Submissions",
+      "item": [
+        {
+          "name": "List Candidates",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/users/candidates"
+          }
+        },
+        {
+          "name": "Assign Assessment",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"candidateIds\": [\"{{candidateId}}\"]\n}" },
+            "url": "{{baseUrl}}/assessments/{{assessmentId}}/assign"
+          }
+        },
+        {
+          "name": "List Assignments",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/assignments"
+          }
+        },
+        {
+          "name": "Unassign Candidate",
+          "request": {
+            "method": "DELETE",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/assignments/{{assignmentId}}"
+          }
+        },
+        {
+          "name": "List Submissions",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/submissions?limit=5"
+          }
+        },
+        {
+          "name": "Get Submission",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/submissions/{{submissionId}}"
+          }
+        },
+        {
+          "name": "Get Proctoring Timeline",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/attempts/{{attemptId}}/proctoring-events"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Candidate",
+      "item": [
+        {
+          "name": "My Assignments",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{candidateToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/candidate/assignments"
+          }
+        },
+        {
+          "name": "My Submission Scores",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{candidateToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/candidate/submission-scores"
+          }
+        },
+        {
+          "name": "Start Assignment",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{candidateToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/assignments/{{assignmentId}}/start"
+          }
+        },
+        {
+          "name": "Get Attempt",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{candidateToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/attempts/{{attemptId}}"
+          }
+        },
+        {
+          "name": "Autosave Answers",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{candidateToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\n    {\n      \"questionId\": \"{{questionId}}\",\n      \"answer\": \"A\"\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/attempts/{{attemptId}}/answers"
+          }
+        },
+        {
+          "name": "Create Proctoring Event",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{candidateToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"eventType\": \"TAB_SWITCH\",\n  \"metadata\": {\n    \"source\": \"postman\"\n  }\n}" },
+            "url": "{{baseUrl}}/attempts/{{attemptId}}/proctoring-events"
+          }
+        },
+        {
+          "name": "Submit Attempt",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{candidateToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/attempts/{{attemptId}}/submit"
+          }
+        }
+      ]
+    }
+  ]
+}
