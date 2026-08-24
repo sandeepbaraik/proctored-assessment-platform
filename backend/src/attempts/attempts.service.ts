@@ -239,13 +239,18 @@ export class AttemptsService {
       .exec();
   }
 
-  findSubmissionsForAdmin() {
-    return this.submissionModel
-      .find()
+  async findSubmissionsForAdmin(cursor?: string, limit = 10) {
+    const query = cursor && Types.ObjectId.isValid(cursor) ? { _id: { $lt: cursor } } : {};
+    const items = await this.submissionModel
+      .find(query)
       .populate('assessmentId', 'title durationMinutes')
       .populate('candidateId', 'name email')
-      .sort({ submittedAt: -1 })
+      .sort({ _id: -1 })
+      .limit(limit + 1)
       .exec();
+    const hasMore = items.length > limit;
+    const data = hasMore ? items.slice(0, limit) : items;
+    return { data, nextCursor: hasMore ? data[data.length - 1]._id.toString() : null };
   }
 
   async findSubmissionForAdmin(id: string) {

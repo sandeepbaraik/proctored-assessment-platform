@@ -1,0 +1,22 @@
+[
+  { "title": "Frontend Developer React Assessment", "track": "frontend", "durationMinutes": 60, "questionCount": 20 },
+  { "title": "Frontend Developer Angular Assessment", "track": "frontend", "durationMinutes": 60, "questionCount": 22 },
+  { "title": "Frontend Developer Vue Assessment", "track": "frontend", "durationMinutes": 60, "questionCount": 20 },
+  { "title": "Frontend Developer Advanced JavaScript Assessment", "track": "frontend", "durationMinutes": 75, "questionCount": 24 },
+  { "title": "Backend Developer Node.js Assessment", "track": "backend", "durationMinutes": 75, "questionCount": 25 },
+  { "title": "Backend Developer NestJS Assessment", "track": "backend", "durationMinutes": 75, "questionCount": 24 },
+  { "title": "Backend Developer API Design Assessment", "track": "backend", "durationMinutes": 60, "questionCount": 22 },
+  { "title": "Backend Developer Database Assessment", "track": "backend", "durationMinutes": 75, "questionCount": 25 },
+  { "title": "Fullstack Developer MERN Assessment", "track": "fullstack", "durationMinutes": 90, "questionCount": 30 },
+  { "title": "Fullstack Developer MEAN Assessment", "track": "fullstack", "durationMinutes": 90, "questionCount": 30 },
+  { "title": "Fullstack Developer React Node Assessment", "track": "fullstack", "durationMinutes": 90, "questionCount": 28 },
+  { "title": "Fullstack Developer Angular Nest Assessment", "track": "fullstack", "durationMinutes": 90, "questionCount": 28 },
+  { "title": "Cloud Fullstack AWS Assessment", "track": "cloud", "durationMinutes": 90, "questionCount": 26 },
+  { "title": "AWS Backend Services Assessment", "track": "cloud", "durationMinutes": 75, "questionCount": 24 },
+  { "title": "MySQL Database Developer Assessment", "track": "database", "durationMinutes": 60, "questionCount": 22 },
+  { "title": "MongoDB Data Modeling Assessment", "track": "database", "durationMinutes": 60, "questionCount": 22 },
+  { "title": "System Design Fullstack Assessment", "track": "fullstack", "durationMinutes": 90, "questionCount": 25 },
+  { "title": "Authentication and Security Assessment", "track": "backend", "durationMinutes": 60, "questionCount": 20 },
+  { "title": "REST API and Integration Assessment", "track": "backend", "durationMinutes": 60, "questionCount": 20 },
+  { "title": "Production Readiness Web Assessment", "track": "cloud", "durationMinutes": 75, "questionCount": 24 }
+]

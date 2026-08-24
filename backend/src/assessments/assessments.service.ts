@@ -23,6 +23,18 @@ export class AssessmentsService {
     return this.assessmentModel.find().sort({ createdAt: -1 }).exec();
   }
 
+  async findPage(cursor?: string, limit = 10) {
+    const query = cursor && Types.ObjectId.isValid(cursor) ? { _id: { $lt: cursor } } : {};
+    const items = await this.assessmentModel
+      .find(query)
+      .sort({ _id: -1 })
+      .limit(limit + 1)
+      .exec();
+    const hasMore = items.length > limit;
+    const data = hasMore ? items.slice(0, limit) : items;
+    return { data, nextCursor: hasMore ? data[data.length - 1]._id.toString() : null };
+  }
+
   async findByIdOrThrow(id: string) {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('Assessment not found');

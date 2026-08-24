@@ -33,6 +33,14 @@ export type Assignment = {
   assignedAt: string;
 };
 
+export type AdminAssignment = {
+  _id: string;
+  assessmentId: Assessment;
+  candidateId: Candidate;
+  status: 'ASSIGNED' | 'IN_PROGRESS' | 'SUBMITTED' | 'EXPIRED';
+  assignedAt: string;
+};
+
 export type Candidate = {
   _id: string;
   name: string;
@@ -55,6 +63,11 @@ export type ProctoringEvent = {
   eventType: string;
   timestamp: string;
   metadata?: Record<string, unknown>;
+};
+
+export type Page<T> = {
+  data: T[];
+  nextCursor: string | null;
 };
 
 export type AttemptState = {

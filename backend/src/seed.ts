@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import * as bcrypt from 'bcrypt';
+import * as fs from 'fs';
+import * as path from 'path';
 import mongoose, { Types } from 'mongoose';
 import { AssessmentStatus } from './common/enums/assessment-status.enum';
 import { AssignmentStatus } from './common/enums/assignment-status.enum';
@@ -16,8 +18,34 @@ import {
 import { Question, QuestionSchema } from './questions/schemas/question.schema';
 import { User, UserSchema } from './users/schemas/user.schema';
 
+type CandidateSeed = {
+  name: string;
+  email: string;
+};
+
+type AssessmentSeed = {
+  title: string;
+  track: string;
+  durationMinutes: number;
+  questionCount: number;
+};
+
+type QuestionSeed = {
+  track: string;
+  type: QuestionType;
+  questionText: string;
+  options: string[];
+  correctAnswers: string[];
+  marks: number;
+};
+
 const mongoUri =
   process.env.MONGODB_URI ?? 'mongodb://localhost:27017/proctored_assessment';
+
+function readSeedJson<T>(filename: string): T {
+  const filePath = path.join(__dirname, 'seed-data', filename);
+  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
+}
 
 async function upsertUser(
   name: string,
@@ -34,6 +62,36 @@ async function upsertUser(
   );
 }
 
+function buildOptions(optionTexts: string[]) {
+  return optionTexts.map((text, index) => ({
+    label: String.fromCharCode(65 + index),
+    text,
+  }));
+}
+
+function pickQuestions(
+  assessment: AssessmentSeed,
+  questionBank: QuestionSeed[],
+): QuestionSeed[] {
+  const exactTrack = questionBank.filter(
+    (question) => question.track === assessment.track,
+  );
+  const sharedTracks = questionBank.filter((question) =>
+    ['backend', 'frontend', 'database', 'cloud', 'fullstack'].includes(
+      question.track,
+    ),
+  );
+  const pool = [...exactTrack, ...sharedTracks];
+
+  return Array.from({ length: assessment.questionCount }, (_, index) => {
+    const baseQuestion = pool[index % pool.length];
+    return {
+      ...baseQuestion,
+      questionText: `${baseQuestion.questionText} (${assessment.title} - Q${index + 1})`,
+    };
+  });
+}
+
 async function seed() {
   await mongoose.connect(mongoUri);
 
@@ -41,97 +99,94 @@ async function seed() {
   const AssignmentModel = mongoose.model(Assignment.name, AssignmentSchema);
   const QuestionModel = mongoose.model(Question.name, QuestionSchema);
 
+  const candidatesSeed = readSeedJson<CandidateSeed[]>('candidates.json');
+  const assessmentsSeed = readSeedJson<AssessmentSeed[]>('assessments.json');
+  const questionBank = readSeedJson<QuestionSeed[]>('question-bank.json');
+
   const admin = await upsertUser(
     'Admin User',
     'admin@example.com',
     'Admin@123',
     UserRole.ADMIN,
   );
-  const candidate1 = await upsertUser(
-    'Candidate One',
-    'candidate1@example.com',
-    'Candidate@123',
-    UserRole.CANDIDATE,
-  );
-  const candidate2 = await upsertUser(
-    'Candidate Two',
-    'candidate2@example.com',
-    'Candidate@123',
-    UserRole.CANDIDATE,
-  );
 
-  const assessment = await AssessmentModel.findOneAndUpdate(
-    { title: 'Sample Full-Stack Assessment' },
-    {
-      title: 'Sample Full-Stack Assessment',
-      description: 'Seed assessment covering all supported question types.',
-      durationMinutes: 30,
-      status: AssessmentStatus.PUBLISHED,
-      createdBy: admin._id,
-      proctoringRules: {
-        captureTabSwitch: true,
-        captureWindowBlur: true,
-        captureFullscreenExit: true,
-        captureCopyPaste: true,
-        captureRightClick: true,
-        violationLimit: 5,
-      },
-    },
-    { new: true, upsert: true },
+  const candidates = await Promise.all(
+    candidatesSeed.map((candidate) =>
+      upsertUser(
+        candidate.name,
+        candidate.email,
+        'Candidate@123',
+        UserRole.CANDIDATE,
+      ),
+    ),
   );
 
-  await QuestionModel.deleteMany({ assessmentId: assessment._id });
-  await QuestionModel.insertMany([
-    {
-      assessmentId: assessment._id,
-      type: QuestionType.SINGLE_CHOICE,
-      questionText: 'Which HTTP status code means Forbidden?',
-      options: [
-        { label: 'A', text: '200' },
-        { label: 'B', text: '401' },
-        { label: 'C', text: '403' },
-        { label: 'D', text: '500' },
-      ],
-      correctAnswers: ['C'],
-      marks: 2,
-      order: 1,
-    },
-    {
-      assessmentId: assessment._id,
-      type: QuestionType.MULTIPLE_CHOICE,
-      questionText: 'Which features are required for this platform?',
-      options: [
-        { label: 'A', text: 'JWT authentication' },
-        { label: 'B', text: 'Autosave answers' },
-        { label: 'C', text: 'Server-driven timer' },
-        { label: 'D', text: 'Blockchain certificates' },
-      ],
-      correctAnswers: ['A', 'B', 'C'],
-      marks: 3,
-      order: 2,
-    },
-    {
-      assessmentId: assessment._id,
-      type: QuestionType.SHORT_ANSWER,
-      questionText: 'Briefly explain why candidate ownership validation matters.',
-      options: [],
-      correctAnswers: [],
-      marks: 0,
-      order: 3,
-    },
-  ]);
-
-  for (const candidateId of [candidate1._id, candidate2._id] as Types.ObjectId[]) {
-    await AssignmentModel.updateOne(
-      { assessmentId: assessment._id, candidateId },
+  for (const [assessmentIndex, assessmentSeed] of assessmentsSeed.entries()) {
+    const assessment = await AssessmentModel.findOneAndUpdate(
+      { title: assessmentSeed.title },
       {
-        assessmentId: assessment._id,
-        candidateId,
-        assignedAt: new Date(),
-        status: AssignmentStatus.ASSIGNED,
+        title: assessmentSeed.title,
+        description: `${assessmentSeed.track.toUpperCase()} assessment covering MERN/MEAN, AWS, MySQL, MongoDB, API design, security, and practical web development topics.`,
+        durationMinutes: assessmentSeed.durationMinutes,
+        status: AssessmentStatus.PUBLISHED,
+        createdBy: admin._id,
+        proctoringRules: {
+          captureTabSwitch: true,
+          captureWindowBlur: true,
+          captureFullscreenExit: true,
+          captureCopyPaste: true,
+          captureRightClick: true,
+          violationLimit: 5,
+        },
       },
-      { upsert: true },
+      { new: true, upsert: true },
     );
+
+    await QuestionModel.deleteMany({
+      $or: [{ assessmentId: assessment._id }, { assessmentIds: assessment._id }],
+    });
+
+    const assessmentQuestions = pickQuestions(assessmentSeed, questionBank);
+    await QuestionModel.insertMany(
+      assessmentQuestions.map((question, index) => ({
+        assessmentId: assessment._id,
+        assessmentIds: [assessment._id],
+        type: question.type,
+        questionText: question.questionText,
+        options: buildOptions(question.options),
+        correctAnswers: question.correctAnswers,
+        marks: question.marks,
+        order: index + 1,
+      })),
+    );
+
+    const assignedCandidates = candidates.slice(
+      assessmentIndex % candidates.length,
+      assessmentIndex % candidates.length + 5,
+    );
+    const wrappedCandidates =
+      assignedCandidates.length === 5
+        ? assignedCandidates
+        : [
+            ...assignedCandidates,
+            ...candidates.slice(0, 5 - assignedCandidates.length),
+          ];
+
+    for (const candidate of wrappedCandidates) {
+      await AssignmentModel.updateOne(
+        {
+          assessmentId: assessment._id,
+          candidateId: candidate._id as Types.ObjectId,
+        },
+        {
+          assessmentId: assessment._id,
+          candidateId: candidate._id,
+          assignedAt: new Date(),
+          status: AssignmentStatus.ASSIGNED,
+        },
+        { upsert: true },
+      );
+    }
   }
 
   await mongoose.disconnect();

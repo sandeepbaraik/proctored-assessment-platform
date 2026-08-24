@@ -1,0 +1,17 @@
+[
+  { "name": "Aarav Sharma", "email": "candidate1@example.com" },
+  { "name": "Diya Patel", "email": "candidate2@example.com" },
+  { "name": "Rohan Mehta", "email": "candidate3@example.com" },
+  { "name": "Ananya Rao", "email": "candidate4@example.com" },
+  { "name": "Kabir Singh", "email": "candidate5@example.com" },
+  { "name": "Meera Iyer", "email": "candidate6@example.com" },
+  { "name": "Vivaan Gupta", "email": "candidate7@example.com" },
+  { "name": "Isha Nair", "email": "candidate8@example.com" },
+  { "name": "Arjun Reddy", "email": "candidate9@example.com" },
+  { "name": "Sara Khan", "email": "candidate10@example.com" },
+  { "name": "Neil Thomas", "email": "candidate11@example.com" },
+  { "name": "Priya Menon", "email": "candidate12@example.com" },
+  { "name": "Aditya Kulkarni", "email": "candidate13@example.com" },
+  { "name": "Nisha Verma", "email": "candidate14@example.com" },
+  { "name": "Karan Malhotra", "email": "candidate15@example.com" }
+]

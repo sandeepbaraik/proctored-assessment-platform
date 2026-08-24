@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -14,6 +15,8 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '../common/enums/user-role.enum';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { AuthenticatedUser } from '../common/types/authenticated-user.type';
+import { CursorQueryDto } from '../common/dto/cursor-query.dto';
+import { AttachQuestionsDto } from '../questions/dto/attach-questions.dto';
 import { CreateQuestionDto } from '../questions/dto/create-question.dto';
 import { UpdateQuestionDto } from '../questions/dto/update-question.dto';
 import { QuestionsService } from '../questions/questions.service';
@@ -39,7 +42,10 @@ export class AssessmentsController {
   }
 
   @Get()
-  findAll() {
+  findAll(@Query() query: CursorQueryDto) {
+    if (query.cursor || query.limit) {
+      return this.assessmentsService.findPage(query.cursor, query.limit);
+    }
     return this.assessmentsService.findAll();
   }
 
@@ -68,6 +74,18 @@ export class AssessmentsController {
   ) {
     await this.assessmentsService.findByIdOrThrow(assessmentId);
     return this.questionsService.create(assessmentId, createQuestionDto);
+  }
+
+  @Post(':assessmentId/questions/attach')
+  async attachQuestions(
+    @Param('assessmentId') assessmentId: string,
+    @Body() attachQuestionsDto: AttachQuestionsDto,
+  ) {
+    await this.assessmentsService.findByIdOrThrow(assessmentId);
+    return this.questionsService.attachToAssessment(
+      assessmentId,
+      attachQuestionsDto.questionIds,
+    );
   }
 
   @Get(':assessmentId/questions')

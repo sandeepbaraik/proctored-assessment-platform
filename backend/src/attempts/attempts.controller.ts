@@ -5,8 +5,10 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
+import { CursorQueryDto } from '../common/dto/cursor-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -82,8 +84,8 @@ export class AttemptsController {
 
   @Get('submissions')
   @Roles(UserRole.ADMIN)
-  findSubmissionsForAdmin() {
-    return this.attemptsService.findSubmissionsForAdmin();
+  findSubmissionsForAdmin(@Query() query: CursorQueryDto) {
+    return this.attemptsService.findSubmissionsForAdmin(query.cursor, query.limit);
   }
 
   @Get('submissions/:id')

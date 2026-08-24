@@ -1,5 +1,4 @@
 import {
-  ArrayMinSize,
   IsArray,
   IsEnum,
   IsInt,
@@ -29,7 +28,6 @@ export class CreateQuestionDto {
 
   @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
   @IsString({ each: true })
   correctAnswers?: string[];
 

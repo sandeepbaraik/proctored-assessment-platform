@@ -17,8 +17,11 @@ const QuestionOptionSchema = SchemaFactory.createForClass(QuestionOption);
 
 @Schema({ timestamps: true })
 export class Question {
-  @Prop({ type: Types.ObjectId, ref: 'Assessment', required: true, index: true })
-  assessmentId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Assessment', index: true })
+  assessmentId?: Types.ObjectId;
+
+  @Prop({ type: [Types.ObjectId], ref: 'Assessment', default: [], index: true })
+  assessmentIds: Types.ObjectId[];
 
   @Prop({ required: true, enum: QuestionType })
   type: QuestionType;
@@ -41,3 +44,4 @@ export class Question {
 
 export const QuestionSchema = SchemaFactory.createForClass(Question);
 QuestionSchema.index({ assessmentId: 1, order: 1 });
+QuestionSchema.index({ assessmentIds: 1, order: 1 });
